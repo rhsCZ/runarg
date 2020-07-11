@@ -5,11 +5,11 @@
     <RESOURCE_FILE>runarg.rc</RESOURCE_FILE>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>D:\hasher.exe</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>/install</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>D:\hasher.exe</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>/install</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

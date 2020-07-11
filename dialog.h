@@ -14,7 +14,11 @@
 #include <afxeditbrowsectrl.h>
 using namespace std;
 PCHAR* CommandLineToArgvA(PCHAR CmdLine, int* _argc);
+void install(char** argv);
+void uninstall();
 LPSTR* cmd;
+char** argvs;
+bool runcmd = 0;
 char pathprg[500] = {'\0'}, args[500] = { '\0' };
 int check = 0;
 int argc=0;
@@ -322,4 +326,44 @@ int RegGetKey(HKEY key, LPSTR keyloc, unsigned long type, REGSAM access, LPSTR n
 	}
 	CloseHandle(keyval);
 	return onerr;
+}
+BOOL IsRunAsAdministrator()
+{
+	BOOL fIsRunAsAdmin = FALSE;
+	DWORD dwError = ERROR_SUCCESS;
+	PSID pAdministratorsGroup = NULL;
+
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	if (!AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&pAdministratorsGroup))
+	{
+		dwError = GetLastError();
+		goto Cleanup;
+	}
+
+	if (!CheckTokenMembership(NULL, pAdministratorsGroup, &fIsRunAsAdmin))
+	{
+		dwError = GetLastError();
+		goto Cleanup;
+	}
+
+Cleanup:
+
+	if (pAdministratorsGroup)
+	{
+		FreeSid(pAdministratorsGroup);
+		pAdministratorsGroup = NULL;
+	}
+
+	if (ERROR_SUCCESS != dwError)
+	{
+		throw dwError;
+	}
+
+	return fIsRunAsAdmin;
 }

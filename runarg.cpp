@@ -75,6 +75,22 @@ BOOL runargapp::InitInstance()
 }
 runargapp::runargapp()
 {
+	char** argv;
+	int argcc;
+	argv = CommandLineToArgvA(GetCommandLineA(), &argcc);
+	if(argcc > 1)
+	{ 
+		if (!strcmp(argv[1], "/install"))
+		{
+			runcmd = true;
+			install(argv);
+		}
+		else if (!strcmp(argv[1], "/uninstall"))
+		{
+			runcmd = true;
+			uninstall();
+		}
+	}
 	runargapp::InitApplication();
 	runargapp::InitInstance();
 	if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
@@ -133,7 +149,7 @@ runargapp::runargapp()
 }
 
 runargapp theApp;
-int main()
+int main(int argc,char** argv)
 {
 	return 0;
 }
@@ -150,13 +166,72 @@ void runargdlg::OnBnClickedOk()
 }
 void runargdlg::OnBnClickedInstall()
 {
-	char path[500] = { '\0' };
-	int error;
-	sprintf_s(path, "\"%s\" \"%%1\"\0", cmd[0]);
-	error = RegCrtKey(HKEY_CLASSES_ROOT, (LPSTR)"*\\Shell\\Run with args\\Command", KEY_ALL_ACCESS | KEY_WOW64_64KEY);
-	RegSetKey(HKEY_CLASSES_ROOT, (LPSTR)"*\\Shell\\Run with args\\Command", REG_SZ, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL, strlen(path), &path);
+	char** argv;
+	int argc;
+	argv = CommandLineToArgvA(GetCommandLineA(), &argc);
+	if(IsRunAsAdministrator())
+	{ 
+		install(argv);
+	}
+	else
+	{
+		
+		SHELLEXECUTEINFOA shExInfo = { 0 };
+		shExInfo.cbSize = sizeof(shExInfo);
+		shExInfo.fMask = SEE_MASK_DEFAULT;
+		shExInfo.hwnd = 0;
+		shExInfo.lpFile = argv[0];
+		shExInfo.lpParameters = "/install";
+		shExInfo.lpVerb = "runas";
+		shExInfo.lpDirectory = 0;
+		shExInfo.nShow = SW_SHOW;
+		shExInfo.hInstApp = 0;
+		ShellExecuteExA(&shExInfo);
+	}
+	
 }
 void runargdlg::OnBnClickedUninstall()
 {
-	RegDelnode(HKEY_CLASSES_ROOT, (LPCTSTR)L"*\\Shell\\Run with args");
+	if (IsRunAsAdministrator())
+	{
+		uninstall();
+	}
+	else
+	{
+		char** argv;
+		int argc;
+		argv = CommandLineToArgvA(GetCommandLineA(), &argc);
+		SHELLEXECUTEINFOA shExInfo = { 0 };
+		shExInfo.cbSize = sizeof(shExInfo);
+		shExInfo.fMask = SEE_MASK_DEFAULT;
+		shExInfo.hwnd = 0;
+		shExInfo.lpFile = argv[0];
+		shExInfo.lpParameters = "/uninstall";
+		shExInfo.lpVerb = "runas";
+		shExInfo.lpDirectory = 0;
+		shExInfo.nShow = SW_SHOW;
+		shExInfo.hInstApp = 0;
+		ShellExecuteExA(&shExInfo);
+	}
+	
+}
+void install(char** argv)
+{
+	char path[500] = { '\0' };
+	int error;
+	sprintf_s(path, "\"%s\" \"%%1\"\0", argv[0]);
+	error = RegCrtKey(HKEY_CLASSES_ROOT, (LPSTR)"exefile\\Shell\\Run with args\\Command", KEY_ALL_ACCESS | KEY_WOW64_64KEY);
+	RegSetKey(HKEY_CLASSES_ROOT, (LPSTR)"exefile\\Shell\\Run with args\\Command", REG_SZ, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL, strlen(path), &path);
+	if (runcmd == true)
+	{
+		exit(-2);
+	}
+}
+void uninstall()
+{
+	RegDelnode(HKEY_CLASSES_ROOT, (LPCTSTR)L"exefile\\Shell\\Run with args");
+	if (runcmd == true)
+	{
+		exit(-2);
+	}
 }
